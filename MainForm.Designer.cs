@@ -31,27 +31,29 @@ namespace MQTT_Intek
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.txtNewTopic = new System.Windows.Forms.TextBox();
             this.btnSubscribe = new System.Windows.Forms.Button();
             this.listViewTopics = new System.Windows.Forms.ListView();
             this.listViewMessages = new System.Windows.Forms.ListView();
+            this.timestampHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.senderHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.contentHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.txtMessage = new System.Windows.Forms.TextBox();
             this.btnSend = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txtNewTopic
             // 
-            this.txtNewTopic.Location = new System.Drawing.Point(12, 12);
+            this.txtNewTopic.Location = new System.Drawing.Point(12, 7);
             this.txtNewTopic.Name = "txtNewTopic";
             this.txtNewTopic.Size = new System.Drawing.Size(200, 26);
             this.txtNewTopic.TabIndex = 0;
             // 
             // btnSubscribe
             // 
-            this.btnSubscribe.Location = new System.Drawing.Point(220, 11);
+            this.btnSubscribe.Location = new System.Drawing.Point(218, 7);
             this.btnSubscribe.Name = "btnSubscribe";
-            this.btnSubscribe.Size = new System.Drawing.Size(100, 28);
+            this.btnSubscribe.Size = new System.Drawing.Size(100, 26);
             this.btnSubscribe.TabIndex = 1;
             this.btnSubscribe.Text = "Subscribe";
             this.btnSubscribe.Click += new System.EventHandler(this.btnSubscribe_Click);
@@ -61,7 +63,7 @@ namespace MQTT_Intek
             this.listViewTopics.HideSelection = false;
             this.listViewTopics.Location = new System.Drawing.Point(12, 40);
             this.listViewTopics.Name = "listViewTopics";
-            this.listViewTopics.Size = new System.Drawing.Size(280, 200);
+            this.listViewTopics.Size = new System.Drawing.Size(306, 200);
             this.listViewTopics.TabIndex = 2;
             this.listViewTopics.UseCompatibleStateImageBehavior = false;
             this.listViewTopics.View = System.Windows.Forms.View.List;
@@ -69,26 +71,45 @@ namespace MQTT_Intek
             // 
             // listViewMessages
             // 
+            this.listViewMessages.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.timestampHeader,
+            this.senderHeader,
+            this.contentHeader});
             this.listViewMessages.HideSelection = false;
-            this.listViewMessages.Location = new System.Drawing.Point(300, 40);
+            this.listViewMessages.Location = new System.Drawing.Point(327, 40);
             this.listViewMessages.Name = "listViewMessages";
-            this.listViewMessages.Size = new System.Drawing.Size(500, 200);
+            this.listViewMessages.Size = new System.Drawing.Size(605, 200);
             this.listViewMessages.TabIndex = 3;
             this.listViewMessages.UseCompatibleStateImageBehavior = false;
             this.listViewMessages.View = System.Windows.Forms.View.Details;
             // 
+            // timestampHeader
+            // 
+            this.timestampHeader.Text = "Timestamp";
+            this.timestampHeader.Width = 150;
+            // 
+            // senderHeader
+            // 
+            this.senderHeader.Text = "Sender";
+            this.senderHeader.Width = 150;
+            // 
+            // contentHeader
+            // 
+            this.contentHeader.Text = "Content";
+            this.contentHeader.Width = 300;
+            // 
             // txtMessage
             // 
-            this.txtMessage.Location = new System.Drawing.Point(300, 250);
+            this.txtMessage.Location = new System.Drawing.Point(327, 250);
             this.txtMessage.Name = "txtMessage";
-            this.txtMessage.Size = new System.Drawing.Size(400, 26);
+            this.txtMessage.Size = new System.Drawing.Size(524, 26);
             this.txtMessage.TabIndex = 0;
             // 
             // btnSend
             // 
-            this.btnSend.Location = new System.Drawing.Point(710, 248);
+            this.btnSend.Location = new System.Drawing.Point(857, 250);
             this.btnSend.Name = "btnSend";
-            this.btnSend.Size = new System.Drawing.Size(75, 23);
+            this.btnSend.Size = new System.Drawing.Size(75, 26);
             this.btnSend.TabIndex = 0;
             this.btnSend.Text = "Send";
             this.btnSend.Click += new System.EventHandler(this.btnSend_Click);
@@ -104,10 +125,16 @@ namespace MQTT_Intek
             this.Controls.Add(this.btnSend);
             this.Name = "MainForm";
             this.Text = "MQTT Client";
+            this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
+
+        private ColumnHeader timestampHeader;
+        private ColumnHeader senderHeader;
+        private ColumnHeader contentHeader;
     }
 }
 
