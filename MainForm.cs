@@ -16,15 +16,16 @@ namespace MQTT_Intek
     /// </summary>
     public partial class MainForm : Form
     {
-        private TextBox txtNewTopic;
-        private Button btnSubscribe;
-        private ListView listViewTopics;
-        private ListView listViewMessages;
-        private TextBox txtMessage;
-        private Button btnSend;
+        private TextBox _txtNewTopic;
+        private Button _btnSubscribe;
+        private ListView _listViewTopics;
+        private ListView _listViewMessages;
+        private TextBox _txtMessage;
+        private Button _btnSend;
         private Client _mqttClient;
-        private Dictionary<string, List<Message>> topicMessages;
-        private int _selectedTopic = -1;
+        private Dictionary<string, List<Message>> _topicMessages;
+        private int _selectedTopicIndex = -1;
+        private string _selectedTopicName;
 
         /// <summary>
         /// Constructor for the main form.
@@ -32,7 +33,7 @@ namespace MQTT_Intek
         public MainForm()
         {
             InitializeComponent();
-            topicMessages = new Dictionary<string, List<Message>>();
+            _topicMessages = new Dictionary<string, List<Message>>();
         }
 
         /// <summary>
@@ -42,11 +43,11 @@ namespace MQTT_Intek
         /// <param name="e"></param>
         private void btnSubscribe_Click(object sender, EventArgs e)
         {
-            string topic = txtNewTopic.Text.Trim();
+            string topic = _txtNewTopic.Text.Trim();
             if (!string.IsNullOrEmpty(topic))
             {
                 SubscribeToTopic(topic);
-                txtNewTopic.Clear();
+                _txtNewTopic.Clear();
             }
         }
 
@@ -57,14 +58,15 @@ namespace MQTT_Intek
         /// <param name="e"></param>
         private void btnSend_Click(object sender, EventArgs e)
         {
-            if (_selectedTopic != -1)
+            if (_selectedTopicIndex != -1)
             {
-                string selectedTopicName = listViewTopics.Items[_selectedTopic].Text;
-                string messageContent = txtMessage.Text.Trim();
+                string selectedTopicName = _listViewTopics.Items[_selectedTopicIndex].Text;
+                string messageContent = _txtMessage.Text.Trim();
                 if (!string.IsNullOrEmpty(messageContent))
                 {
+                    _txtMessage.Clear();
+                    Debug.WriteLine($"Sending message: {messageContent} to topic: {selectedTopicName}");
                     _mqttClient.SendMessage(messageContent, selectedTopicName);
-                    txtMessage.Clear();
                 }
                 else
                 {
@@ -85,21 +87,32 @@ namespace MQTT_Intek
         /// <param name="e"></param>
         private void listViewTopics_Click(object sender, EventArgs e)
         {
-            if (listViewTopics.SelectedItems.Count > 0)
+            // Only proceed if a single topic is selected
+            if (_listViewTopics.SelectedItems.Count == 1)
             {
-                string selectedTopicName = listViewTopics.SelectedItems[0].Text;
-                _selectedTopic = listViewTopics.SelectedItems[0].Index;
-                // Highlight selected topic
-                for (int i = 0; i < listViewTopics.Items.Count; i++)
+                // Get the selected topic
+                string selectedTopicName = _listViewTopics.SelectedItems[0].Text;
+
+                // If the selected topic is the same as the currently selected topic, do nothing
+                if (_selectedTopicIndex > _listViewTopics.Items.Count && selectedTopicName == _listViewTopics.Items[_selectedTopicIndex].Text)
                 {
-                    if (i == _selectedTopic)
+                    return;
+                }
+
+                // Set the new selected topic index
+                _selectedTopicIndex = _listViewTopics.Items.IndexOf(_listViewTopics.SelectedItems[0]);
+                _selectedTopicName = selectedTopicName;
+                // Highlight selected topic
+                for (int i = 0; i < _listViewTopics.Items.Count; i++)
+                {
+                    if (i == _selectedTopicIndex)
                     {
-                        listViewTopics.Items[i].BackColor = Color.Cyan;
-                        listViewTopics.Items[i].Selected = false;
+                        _listViewTopics.Items[i].BackColor = Color.Cyan;
+                        _listViewTopics.Items[i].Selected = false;
                     }
                     else
                     {
-                        listViewTopics.Items[i].BackColor = Color.White;
+                        _listViewTopics.Items[i].BackColor = Color.White;
                     }
                 }
                 // Display messages for the selected topic
@@ -114,9 +127,10 @@ namespace MQTT_Intek
         private void SubscribeToTopic(string topic)
         {
             // Add the topic to the ListView
-            if (!listViewTopics.Items.ContainsKey(topic))
+            if (!_listViewTopics.Items.ContainsKey(topic))
             {
-                listViewTopics.Items.Add(new ListViewItem { Text = topic, Name = topic });
+                _listViewTopics.Items.Add(new ListViewItem { Text = topic, Name = topic });
+                _topicMessages[topic] = new List<Message>();
                 // Check if the client is connected before subscribing
                 if (_mqttClient.IsConnected())
                 {
@@ -142,12 +156,15 @@ namespace MQTT_Intek
         private void DisplayMessagesForTopic(string topic)
         {
             // Get messages for the selected topic
-            topicMessages[topic] = _mqttClient.GetMessages(topic);
+            //topicMessages[topic] = _mqttClient.GetMessages(topic);
+            
             // Clear the ListView
-            listViewMessages.Items.Clear();
+            _listViewMessages.Items.Clear();
 
+            var wildcardMessages = _topicMessages.Where(x => MqttTopicMatcher.IsMatch(topic, x.Key)).SelectMany(x => x.Value).ToList();
+            wildcardMessages.Sort((x, y) => x.Timestamp.CompareTo(y.Timestamp));
             // Add messages to the ListView
-            foreach (Message message in topicMessages[topic])
+            foreach (Message message in wildcardMessages)
             {
                 // Create a new ListViewItem with the message details
                 ListViewItem item = new ListViewItem(new string[] { 
@@ -155,8 +172,9 @@ namespace MQTT_Intek
                     message.Sender.ToString(), 
                     message.Content.ToString() 
                 });
-                listViewMessages.Items.Add(item);
+                _listViewMessages.Items.Add(item);
             }
+            Debug.WriteLine($"Displaying {_listViewMessages.Items.Count} messages");
         }
 
         /// <summary>
@@ -188,18 +206,18 @@ namespace MQTT_Intek
         private void MqttClient_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
             // Add the message to the topicMessages dictionary
-            if (!topicMessages.ContainsKey(e.Message_.Topic))
+            if (!_topicMessages.ContainsKey(e.Message_.Topic))
             {
-                topicMessages[e.Message_.Topic] = new List<Message>();
+                _topicMessages[e.Message_.Topic] = new List<Message>();
             }
-            topicMessages[e.Message_.Topic].Add(e.Message_);
+            _topicMessages[e.Message_.Topic].Add(e.Message_);
             
             // Update the message display if the selected topic is the same as the received topic
             Invoke((MethodInvoker)delegate
             {
-                if (listViewTopics.Items.Count > _selectedTopic && MqttTopicMatcher.IsMatch(listViewTopics.Items[_selectedTopic].Text, e.Message_.Topic))
+                if (_listViewTopics.Items.Count > _selectedTopicIndex && MqttTopicMatcher.IsMatch(_selectedTopicName, e.Message_.Topic))
                 {
-                    DisplayMessagesForTopic(e.Message_.Topic);
+                    DisplayMessagesForTopic(_selectedTopicName);
                 }
             });
         }

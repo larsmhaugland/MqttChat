@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Protocol;
+using static MQTT_Intek.Message;
 
 namespace MQTT_Intek
 {
@@ -49,6 +50,10 @@ namespace MQTT_Intek
         /// </summary>
         private IMqttClient _mqttClient;
         /// <summary>
+        /// A list of topics that the client is subscribed to
+        /// </summary>
+        private List<string> _subscriptions;
+        /// <summary>
         /// A dictionary of topics and their stored messages
         /// </summary>
         private Dictionary<string,List<Message>> _messages;
@@ -56,6 +61,7 @@ namespace MQTT_Intek
         /// An event handler for when a message is received
         /// </summary>
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+
 
         /// <summary>
         /// Constructor for creating a new MQTT client without credentials
@@ -83,6 +89,7 @@ namespace MQTT_Intek
             _port = port;
             _messages = new Dictionary<string, List<Message>>();
             _mqttClient = new MqttFactory().CreateMqttClient();
+            _subscriptions = new List<string>();
 
             // Set credentials if provided
             if (credentials != null)
@@ -113,6 +120,7 @@ namespace MQTT_Intek
 
             // Subscribe to the topic
             _mqttClient.SubscribeAsync(subscribeOptions).Wait();
+            _subscriptions.Add(topic);
         }
 
         /// <summary>
@@ -125,7 +133,10 @@ namespace MQTT_Intek
             MqttClientUnsubscribeOptions unsubscribeOptions = new MqttClientUnsubscribeOptionsBuilder()
                 .WithTopicFilter(topic)
                 .Build();
-
+            if(_subscriptions.Contains(topic))
+            {
+                _subscriptions.Remove(topic);
+            }
             // Unsubscribe from the topic
             _mqttClient.UnsubscribeAsync(unsubscribeOptions);
         }
@@ -144,26 +155,35 @@ namespace MQTT_Intek
         /// </summary>
         /// <param name="content">Content of the message</param>
         /// <param name="topic">Topic the message should be sent to, default is MqttChat/{Client ID}</param>
+#nullable enable
         public void SendMessage(string content, string? topic)
         {
             // Set the topic to the default if not provided
-            if (topic == null)
+            if (topic == null || topic.Contains("#") || topic.Contains("+"))
             {
                 topic = $"MqttChat/{_clientId}";
             }
 
             // Create a new message object
             Message message = new Message(_clientId, content, topic, DateTime.Now);
+
+            var options = new JsonSerializerOptions();
+            options.Converters.Add(new MessageJsonConverter());
+            
             // Serialize the message to JSON
-            byte[] json = JsonSerializer.SerializeToUtf8Bytes(message);
+            byte[] json = JsonSerializer.SerializeToUtf8Bytes(message, options);
+            // Create a new ArraySegment for the payload
+            ArraySegment<byte> payloadSegment = new ArraySegment<byte>(json);
+
             // Create a new message builder
             MqttApplicationMessageBuilder messageBuilder = new MqttApplicationMessageBuilder()
                 .WithTopic(topic)
-                .WithPayload(json);
+                .WithPayloadSegment(payloadSegment);
 
             // Publish the message
             _mqttClient.PublishAsync(messageBuilder.Build());
         }
+#nullable disable
 
         /// <summary>
         /// Gets a list of all stored messages for a given topic
@@ -247,6 +267,7 @@ namespace MQTT_Intek
         /// </summary>
         public void Disconnect()
         {
+            // Set reconnect flag to false to prevent automatic reconnection
             _reconnect = false;
             _mqttClient.DisconnectAsync().Wait();
         }
@@ -273,21 +294,33 @@ namespace MQTT_Intek
         /// <param name="e">The EventArgs for the received message</param>
         /// <returns>A CompletedTask</returns>
         private Task Client_MqttMsgPublishReceived(MqttApplicationMessageReceivedEventArgs e)
-        {   
-            string content = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment.Array);
-            string sender = e.ClientId;
-            string topic = e.ApplicationMessage.Topic;
-            DateTime dateTime = DateTime.Now;
-            Message message = new Message(sender, content, topic, dateTime);
+        {
+            try { 
+                // Usage example
+                var options = new JsonSerializerOptions();
+                options.Converters.Add(new MessageJsonConverter());
 
-            if (!_messages.ContainsKey(topic))
-            {
-                _messages.Add(topic, new List<Message>());               
+                // Deserialize the JSON payload into a Message object
+                Message message = JsonSerializer.Deserialize<Message>(e.ApplicationMessage.PayloadSegment, options);
+
+                if (message != null)
+                {
+                    if (!_messages.ContainsKey(message.Topic))
+                    {
+                        _messages.Add(message.Topic, new List<Message>());
+                    }
+                    _messages[message.Topic].Add(message);
+
+                    Debug.WriteLine($"Message received from {message.Sender} on topic {message.Topic}. My ID is {_clientId}");
+
+                    // Invoke the MessageReceived event
+                    MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
+                }
             }
-            _messages[topic].Add(message);
-            
-            Debug.WriteLine($"Message received from {e.ClientId} on topic {e.ApplicationMessage.Topic}");
-            MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
+            catch (JsonException ex)
+            {
+            Debug.WriteLine($"Failed to deserialize message: {ex.Message}");
+        }
             return Task.CompletedTask;
         }
     }
