@@ -63,7 +63,7 @@ namespace MQTT_Intek
                 if (brokerConnectionForm.DialogResult == DialogResult.OK && brokerConnectionForm.Hostname != "")
                 {
                     // Set the connection status label
-                    connectionStatusLabel.Text = "Attempting to connect...";
+                    connectionStatusLabel.Text = $"Attempting to connect to {brokerConnectionForm.Hostname}...";
 
                     var newClient = SetupMqttClient(brokerConnectionForm.Hostname, brokerConnectionForm.Port());
 

@@ -129,8 +129,7 @@ namespace MQTT_Intek
                 topic = $"MqttChat/{_clientId}";
             }
             // Replace wildcards with client ID
-            topic.Replace("#", _clientId);
-            topic.Replace("+", _clientId);
+            topic = topic.Replace("#", _clientId).Replace("+", _clientId);
 
             // Create a new message object
             Message message = new Message(_clientId, content, topic, DateTime.Now);
