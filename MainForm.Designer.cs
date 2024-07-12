@@ -41,7 +41,7 @@ namespace MQTT_Intek
             this.txtMessage = new System.Windows.Forms.TextBox();
             this.btnSend = new System.Windows.Forms.Button();
             this.changeBroker = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
+            this.connectionStatusLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // txtNewTopic
@@ -128,17 +128,17 @@ namespace MQTT_Intek
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(324, 10);
-            this.label1.Name = "ConnectionStatus";
-            this.label1.Size = new System.Drawing.Size(51, 20);
-            this.label1.TabIndex = 7;
-            this.label1.Text = "";
+            this.connectionStatusLabel.AutoSize = true;
+            this.connectionStatusLabel.Location = new System.Drawing.Point(324, 10);
+            this.connectionStatusLabel.Name = "ConnectionStatus";
+            this.connectionStatusLabel.Size = new System.Drawing.Size(51, 20);
+            this.connectionStatusLabel.TabIndex = 7;
+            this.connectionStatusLabel.Text = "";
             // 
             // MainForm
             // 
             this.ClientSize = new System.Drawing.Size(1296, 479);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.connectionStatusLabel);
             this.Controls.Add(this.changeBroker);
             this.Controls.Add(this.txtNewTopic);
             this.Controls.Add(this.btnSubscribe);
@@ -164,7 +164,7 @@ namespace MQTT_Intek
         private ColumnHeader senderHeader;
         private ColumnHeader contentHeader;
         private Button changeBroker;
-        private Label label1;
+        private Label connectionStatusLabel;
     }
 }
 

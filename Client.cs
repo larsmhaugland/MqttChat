@@ -12,15 +12,6 @@ using static MQTT_Intek.Message;
 
 namespace MQTT_Intek
 {
-    struct Credentials
-    {
-        public string Username;
-        public string Password;
-
-        public Credentials(string username, string password) => (Username, Password) = (username, password);
-    }
-
-
     internal class Client
     {
         /// <summary>
@@ -36,17 +27,9 @@ namespace MQTT_Intek
         /// </summary>
         private int _port;
         /// <summary>
-        /// Whether or not to use credentials for the connection
-        /// </summary>
-        private bool _useCredentials;
-        /// <summary>
         /// Whether or not to reconnect after a disconnect
         /// </summary>
         private bool _reconnect;
-        /// <summary>
-        /// The credentials to use for the connection
-        /// </summary>
-        private Credentials? _credentials;
         /// <summary>
         /// The MQTT client object
         /// </summary>
@@ -64,26 +47,13 @@ namespace MQTT_Intek
         /// </summary>
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
-
-        /// <summary>
-        /// Constructor for creating a new MQTT client without credentials
-        /// </summary>
-        /// <param name="brokerHostname">Hostname of broker</param>
-        /// <param name="clientId">Client ID for connections</param>
-        /// <param name="port">Port to connect to broker</param>
-        public Client(string brokerHostname, string clientId, int port = 1883)
-        : this(brokerHostname, clientId, null, port)
-        {
-        }
-
         /// <summary>
         /// Constructor for creating a new MQTT client with credentials
         /// </summary>
         /// <param name="brokerHostname">Hostname of broker</param>
         /// <param name="clientId">Client ID for connections</param>
-        /// <param name="credentials">Credentials to connect with</param>
         /// <param name="port">Port to connect to broker</param>
-        public Client(string brokerHostname, string clientId, Credentials? credentials, int port = 1883)
+        public Client(string brokerHostname, string clientId, int port = 1883)
         {
             // Set the fields to the provided values
             _brokerHostname = brokerHostname;
@@ -92,13 +62,6 @@ namespace MQTT_Intek
             _messages = new Dictionary<string, List<Message>>();
             _mqttClient = new MqttFactory().CreateMqttClient();
             _subscriptions = new List<string>();
-
-            // Set credentials if provided
-            if (credentials != null)
-            {
-                _useCredentials = true;
-                _credentials = credentials;
-            }
 
             // Connect to the broker
             Connect().Wait();
@@ -161,14 +124,18 @@ namespace MQTT_Intek
         public void SendMessage(string content, string? topic)
         {
             // Set the topic to the default if not provided
-            if (topic == null || topic.Contains("#") || topic.Contains("+"))
+            if (topic == null)
             {
                 topic = $"MqttChat/{_clientId}";
             }
+            // Replace wildcards with client ID
+            topic.Replace("#", _clientId);
+            topic.Replace("+", _clientId);
 
             // Create a new message object
             Message message = new Message(_clientId, content, topic, DateTime.Now);
 
+            // Setup the custom serializer
             var options = new JsonSerializerOptions();
             options.Converters.Add(new MessageJsonConverter());
             
@@ -254,12 +221,6 @@ namespace MQTT_Intek
                 .WithClientId(_clientId)
                 .WithCleanSession();
 
-            // Add credentials if needed
-            if (_useCredentials && _credentials != null)
-            {
-                clientOptions.WithCredentials(_credentials.Value.Username, _credentials.Value.Password);
-            }
-
             // Connect to the broker
             return _mqttClient.ConnectAsync(clientOptions.Build());
         }
@@ -275,7 +236,7 @@ namespace MQTT_Intek
         }
 
         /// <summary>
-        /// Attempts to reconnect to the broker after a disconnect
+        /// Attempts to reconnect to the broker after a disconnect as long as the reconnect flag is set
         /// </summary>
         /// <param name="e">The EventArgs for the disconnection</param>
         /// <returns>A Task representing the asynchronous connect operation or CompletedTask if the _reconnect flag is not set</returns>
@@ -298,7 +259,7 @@ namespace MQTT_Intek
         private Task Client_MqttMsgPublishReceived(MqttApplicationMessageReceivedEventArgs e)
         {
             try { 
-                // Usage example
+                // Setup custom serializer
                 var options = new JsonSerializerOptions();
                 options.Converters.Add(new MessageJsonConverter());
 
@@ -307,13 +268,12 @@ namespace MQTT_Intek
 
                 if (message != null)
                 {
+                    // Add message to dictionary
                     if (!_messages.ContainsKey(message.Topic))
                     {
                         _messages.Add(message.Topic, new List<Message>());
                     }
                     _messages[message.Topic].Add(message);
-
-                    Debug.WriteLine($"Message received from {message.Sender} on topic {message.Topic}. My ID is {_clientId}");
 
                     // Invoke the MessageReceived event
                     MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
@@ -321,8 +281,8 @@ namespace MQTT_Intek
             }
             catch (JsonException ex)
             {
-            Debug.WriteLine($"Failed to deserialize message: {ex.Message}");
-        }
+                Debug.WriteLine($"Failed to deserialize message: {ex.Message}");
+            }
             return Task.CompletedTask;
         }
     }

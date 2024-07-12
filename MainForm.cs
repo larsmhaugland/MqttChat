@@ -33,10 +33,14 @@ namespace MQTT_Intek
         /// <param name="e"></param>
         private void btnSubscribe_Click(object sender, EventArgs e)
         {
+            // Get the topic from the text box
             string topic = txtNewTopic.Text.Trim();
+            // Check if the topic is not empty
             if (!string.IsNullOrEmpty(topic))
             {
+                // Subscribe to the topic
                 SubscribeToTopic(topic);
+                // Clear the text box
                 txtNewTopic.Clear();
             }
         }
@@ -51,13 +55,29 @@ namespace MQTT_Intek
             // Open the broker connection form
             using (BrokerConnectionForm brokerConnectionForm = new BrokerConnectionForm())
             {
+                // Save the previous connection status text
+                var previousText = connectionStatusLabel.Text;
+                // Show the broker connection form
                 brokerConnectionForm.ShowDialog();
                 // If the user clicked OK and entered a hostname
                 if (brokerConnectionForm.DialogResult == DialogResult.OK && brokerConnectionForm.Hostname != "")
                 {
+                    // Set the connection status label
+                    connectionStatusLabel.Text = "Attempting to connect...";
+
+                    var newClient = SetupMqttClient(brokerConnectionForm.Hostname, brokerConnectionForm.Port());
+
+                    // If the client could not connect, show an error message
+                    if (newClient == null)
+                    {
+                        connectionStatusLabel.Text = previousText;
+                        MessageBox.Show("Could not connect to the broker", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
                     // Disconnect the current client
                     _mqttClient.Disconnect();
-                    _mqttClient = null;
+                    // Set the new client
+                    _mqttClient = newClient;
 
                     // Clear the messages from the ListView
                     listViewMessages.Items.Clear();
@@ -160,9 +180,16 @@ namespace MQTT_Intek
                 listViewTopics.Items.Add(new ListViewItem { Text = topic, Name = topic });
                 _topicMessages[topic] = new List<Message>();
                 // Check if the client is connected before subscribing
-                if (_mqttClient.IsConnected())
+                if (_mqttClient != null && _mqttClient.IsConnected())
                 {
-                    _mqttClient.Subscribe(topic);
+                    try
+                    {
+                        _mqttClient.Subscribe(topic);
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Could not subscribe to the topic", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 } 
                 // If the client is not connected, show an error message
                 else
@@ -207,23 +234,27 @@ namespace MQTT_Intek
         /// </summary>
         /// <param name="hostname"/>The hostname of the broker</param>
         /// <param name="port"/>The port of the broker</param>
-        private void SetupMqttClient(string hostname, int port = 1883)
+        private Client SetupMqttClient(string hostname, int port = 1883)
         {
-            // Check if the client is already connected
-            if (_mqttClient != null && _mqttClient.IsConnected())
+            try
             {
-                return;
-            }
+                // Initialize the client with the broker address
+                Client newClient = new Client(hostname, Guid.NewGuid().ToString(), port);
 
-            // Initialize the client with the broker address
-            _mqttClient = new Client(hostname, Guid.NewGuid().ToString(), port);
-            // Subscribe to the message received event
-            _mqttClient.MessageReceived += MqttClient_MessageReceived;
-            // Subscribe to MqttChat topics by default
-            SubscribeToTopic("MqttChat/#");
-            if (_mqttClient.IsConnected())
+                // If the client could not connect, return null
+                if (!newClient.IsConnected())
+                {
+                    return null;
+                }
+                // Set the label to show the connection status
+                connectionStatusLabel.Text = $"Connected to {hostname}";
+                // Subscribe to the message received event
+                newClient.MessageReceived += MqttClient_MessageReceived;
+                return newClient;
+            }
+            catch (Exception)
             {
-                label1.Text = $"Connected to {hostname}";
+                return null;
             }
         }
 
@@ -262,7 +293,15 @@ namespace MQTT_Intek
             // Maximize the form on load
             WindowState = FormWindowState.Maximized;
             // Setup the MQTT client with the default broker address
-            SetupMqttClient("broker.hivemq.com");
+            _mqttClient = SetupMqttClient("broker.hivemq.com");
+            if (_mqttClient == null)
+            {
+                MessageBox.Show("Could not connect to the broker", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.Close();
+                return;
+            }
+            // Subscribe to MqttChat topics by default
+            SubscribeToTopic("MqttChat/#");
         }
     }
 }
