@@ -11,7 +11,7 @@ On the left is a list of all topics that the client is subscribed to. By clickin
 When a topic is selected the user can type a message in the bottom box and press the "Send" button to send the message to that topic. The message will be sent to the broker and all clients subscribed to that topic will receive the message. 
 
 > [!NOTE]
-If the selected topic contains one or more wildcard characters the wildcards will be replaced with the client's GUID. For example, if the topic ```MqttChat/#``` is selected the client will send messages to the topic ```MqttChat/GUID```.
+When sending a message, if the selected topic contains one or more wildcard characters the wildcards will be replaced with the client's GUID. For example, if the topic ```MqttChat/#``` is selected the client will send messages to the topic ```MqttChat/GUID```.
 > 
 
 New topics can be subscribed to by typing in a topic in the top left box and pressing the "Subscribe" button.	
