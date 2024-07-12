@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace MQTT_Intek
@@ -16,12 +12,6 @@ namespace MQTT_Intek
     /// </summary>
     public partial class MainForm : Form
     {
-        private TextBox _txtNewTopic;
-        private Button _btnSubscribe;
-        private ListView _listViewTopics;
-        private ListView _listViewMessages;
-        private TextBox _txtMessage;
-        private Button _btnSend;
         private Client _mqttClient;
         private Dictionary<string, List<Message>> _topicMessages;
         private int _selectedTopicIndex = -1;
@@ -43,36 +33,74 @@ namespace MQTT_Intek
         /// <param name="e"></param>
         private void btnSubscribe_Click(object sender, EventArgs e)
         {
-            string topic = _txtNewTopic.Text.Trim();
+            string topic = txtNewTopic.Text.Trim();
             if (!string.IsNullOrEmpty(topic))
             {
                 SubscribeToTopic(topic);
-                _txtNewTopic.Clear();
+                txtNewTopic.Clear();
             }
         }
 
         /// <summary>
-        /// 
+        /// Handle the click event for the change broker button. Opens a new form to change the broker connection.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnChangeBroker_Click(object sender, EventArgs e)
+        {
+            // Open the broker connection form
+            using (BrokerConnectionForm brokerConnectionForm = new BrokerConnectionForm())
+            {
+                brokerConnectionForm.ShowDialog();
+                // If the user clicked OK and entered a hostname
+                if (brokerConnectionForm.DialogResult == DialogResult.OK && brokerConnectionForm.Hostname != "")
+                {
+                    // Disconnect the current client
+                    _mqttClient.Disconnect();
+                    _mqttClient = null;
+
+                    // Clear the messages from the ListView
+                    listViewMessages.Items.Clear();
+                    // Clear the topics from the ListView
+                    listViewTopics.Items.Clear();
+                    // Clear the topicMessages dictionary
+                    _topicMessages.Clear();
+
+                    // Setup the MQTT client with the new broker address and port
+                    SetupMqttClient(brokerConnectionForm.Hostname, brokerConnectionForm.Port());   
+                }
+            }
+        }
+
+        /// <summary>
+        /// Event handler for the send button click event. Sends a message with the content of the text box to the selected topic.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void btnSend_Click(object sender, EventArgs e)
         {
+            // Check if a topic is selected
             if (_selectedTopicIndex != -1)
             {
-                string selectedTopicName = _listViewTopics.Items[_selectedTopicIndex].Text;
-                string messageContent = _txtMessage.Text.Trim();
+                // Get the name of the selected topic
+                string selectedTopicName = listViewTopics.Items[_selectedTopicIndex].Text;
+                // Get the message content
+                string messageContent = txtMessage.Text.Trim();
+                // Check if the message content is not empty
                 if (!string.IsNullOrEmpty(messageContent))
                 {
-                    _txtMessage.Clear();
-                    Debug.WriteLine($"Sending message: {messageContent} to topic: {selectedTopicName}");
+                    // Clear the message text box
+                    txtMessage.Clear();
+                    // Send the message to the selected topic
                     _mqttClient.SendMessage(messageContent, selectedTopicName);
                 }
+                // Message content is empty
                 else
                 {
                     MessageBox.Show("Please enter a message to send.", "No Message Entered", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
+            // No topic is selected
             else
             {
                 MessageBox.Show("Please select a topic to send the message to.", "No Topic Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -88,31 +116,31 @@ namespace MQTT_Intek
         private void listViewTopics_Click(object sender, EventArgs e)
         {
             // Only proceed if a single topic is selected
-            if (_listViewTopics.SelectedItems.Count == 1)
+            if (listViewTopics.SelectedItems.Count == 1)
             {
                 // Get the selected topic
-                string selectedTopicName = _listViewTopics.SelectedItems[0].Text;
+                string selectedTopicName = listViewTopics.SelectedItems[0].Text;
 
                 // If the selected topic is the same as the currently selected topic, do nothing
-                if (_selectedTopicIndex > _listViewTopics.Items.Count && selectedTopicName == _listViewTopics.Items[_selectedTopicIndex].Text)
+                if (_selectedTopicIndex > listViewTopics.Items.Count && selectedTopicName == listViewTopics.Items[_selectedTopicIndex].Text)
                 {
                     return;
                 }
 
                 // Set the new selected topic index
-                _selectedTopicIndex = _listViewTopics.Items.IndexOf(_listViewTopics.SelectedItems[0]);
+                _selectedTopicIndex = listViewTopics.Items.IndexOf(listViewTopics.SelectedItems[0]);
                 _selectedTopicName = selectedTopicName;
                 // Highlight selected topic
-                for (int i = 0; i < _listViewTopics.Items.Count; i++)
+                for (int i = 0; i < listViewTopics.Items.Count; i++)
                 {
                     if (i == _selectedTopicIndex)
                     {
-                        _listViewTopics.Items[i].BackColor = Color.Cyan;
-                        _listViewTopics.Items[i].Selected = false;
+                        listViewTopics.Items[i].BackColor = Color.Cyan;
+                        listViewTopics.Items[i].Selected = false;
                     }
                     else
                     {
-                        _listViewTopics.Items[i].BackColor = Color.White;
+                        listViewTopics.Items[i].BackColor = Color.White;
                     }
                 }
                 // Display messages for the selected topic
@@ -127,9 +155,9 @@ namespace MQTT_Intek
         private void SubscribeToTopic(string topic)
         {
             // Add the topic to the ListView
-            if (!_listViewTopics.Items.ContainsKey(topic))
+            if (!listViewTopics.Items.ContainsKey(topic))
             {
-                _listViewTopics.Items.Add(new ListViewItem { Text = topic, Name = topic });
+                listViewTopics.Items.Add(new ListViewItem { Text = topic, Name = topic });
                 _topicMessages[topic] = new List<Message>();
                 // Check if the client is connected before subscribing
                 if (_mqttClient.IsConnected())
@@ -154,12 +182,9 @@ namespace MQTT_Intek
         /// </summary>
         /// <param name="topic">The topic to display</param>
         private void DisplayMessagesForTopic(string topic)
-        {
-            // Get messages for the selected topic
-            //topicMessages[topic] = _mqttClient.GetMessages(topic);
-            
+        {           
             // Clear the ListView
-            _listViewMessages.Items.Clear();
+            listViewMessages.Items.Clear();
 
             var wildcardMessages = _topicMessages.Where(x => MqttTopicMatcher.IsMatch(topic, x.Key)).SelectMany(x => x.Value).ToList();
             wildcardMessages.Sort((x, y) => x.Timestamp.CompareTo(y.Timestamp));
@@ -172,16 +197,17 @@ namespace MQTT_Intek
                     message.Sender.ToString(), 
                     message.Content.ToString() 
                 });
-                _listViewMessages.Items.Add(item);
+                listViewMessages.Items.Add(item);
             }
-            Debug.WriteLine($"Displaying {_listViewMessages.Items.Count} messages");
         }
 
         /// <summary>
         /// Sets up the MQTT client with the broker address and subscribes to the MqttChat topics. <br>
         /// If client is already connected then it does nothing.
         /// </summary>
-        private void SetupMqttClient()
+        /// <param name="hostname"/>The hostname of the broker</param>
+        /// <param name="port"/>The port of the broker</param>
+        private void SetupMqttClient(string hostname, int port = 1883)
         {
             // Check if the client is already connected
             if (_mqttClient != null && _mqttClient.IsConnected())
@@ -190,12 +216,15 @@ namespace MQTT_Intek
             }
 
             // Initialize the client with the broker address
-            string brokerAddress = "broker.hivemq.com";
-            _mqttClient = new Client(brokerAddress, Guid.NewGuid().ToString(), 1883);
+            _mqttClient = new Client(hostname, Guid.NewGuid().ToString(), port);
             // Subscribe to the message received event
             _mqttClient.MessageReceived += MqttClient_MessageReceived;
             // Subscribe to MqttChat topics by default
             SubscribeToTopic("MqttChat/#");
+            if (_mqttClient.IsConnected())
+            {
+                label1.Text = $"Connected to {hostname}";
+            }
         }
 
         /// <summary>
@@ -215,7 +244,7 @@ namespace MQTT_Intek
             // Update the message display if the selected topic is the same as the received topic
             Invoke((MethodInvoker)delegate
             {
-                if (_listViewTopics.Items.Count > _selectedTopicIndex && MqttTopicMatcher.IsMatch(_selectedTopicName, e.Message_.Topic))
+                if (listViewTopics.Items.Count > _selectedTopicIndex && MqttTopicMatcher.IsMatch(_selectedTopicName, e.Message_.Topic))
                 {
                     DisplayMessagesForTopic(_selectedTopicName);
                 }
@@ -232,8 +261,8 @@ namespace MQTT_Intek
 
             // Maximize the form on load
             WindowState = FormWindowState.Maximized;
-            // Setup the MQTT client
-            SetupMqttClient();
+            // Setup the MQTT client with the default broker address
+            SetupMqttClient("broker.hivemq.com");
         }
     }
 }

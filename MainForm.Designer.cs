@@ -31,57 +31,59 @@ namespace MQTT_Intek
         /// </summary>
         private void InitializeComponent()
         {
-            this._txtNewTopic = new System.Windows.Forms.TextBox();
-            this._btnSubscribe = new System.Windows.Forms.Button();
-            this._listViewTopics = new System.Windows.Forms.ListView();
-            this._listViewMessages = new System.Windows.Forms.ListView();
+            this.txtNewTopic = new System.Windows.Forms.TextBox();
+            this.btnSubscribe = new System.Windows.Forms.Button();
+            this.listViewTopics = new System.Windows.Forms.ListView();
+            this.listViewMessages = new System.Windows.Forms.ListView();
             this.timestampHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.senderHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.contentHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this._txtMessage = new System.Windows.Forms.TextBox();
-            this._btnSend = new System.Windows.Forms.Button();
+            this.txtMessage = new System.Windows.Forms.TextBox();
+            this.btnSend = new System.Windows.Forms.Button();
+            this.changeBroker = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // txtNewTopic
             // 
-            this._txtNewTopic.Location = new System.Drawing.Point(12, 7);
-            this._txtNewTopic.Name = "txtNewTopic";
-            this._txtNewTopic.Size = new System.Drawing.Size(200, 26);
-            this._txtNewTopic.TabIndex = 0;
+            this.txtNewTopic.Location = new System.Drawing.Point(12, 7);
+            this.txtNewTopic.Name = "txtNewTopic";
+            this.txtNewTopic.Size = new System.Drawing.Size(200, 26);
+            this.txtNewTopic.TabIndex = 0;
             // 
             // btnSubscribe
             // 
-            this._btnSubscribe.Location = new System.Drawing.Point(218, 7);
-            this._btnSubscribe.Name = "btnSubscribe";
-            this._btnSubscribe.Size = new System.Drawing.Size(100, 26);
-            this._btnSubscribe.TabIndex = 1;
-            this._btnSubscribe.Text = "Subscribe";
-            this._btnSubscribe.Click += new System.EventHandler(this.btnSubscribe_Click);
+            this.btnSubscribe.Location = new System.Drawing.Point(218, 7);
+            this.btnSubscribe.Name = "btnSubscribe";
+            this.btnSubscribe.Size = new System.Drawing.Size(100, 26);
+            this.btnSubscribe.TabIndex = 1;
+            this.btnSubscribe.Text = "Subscribe";
+            this.btnSubscribe.Click += new System.EventHandler(this.btnSubscribe_Click);
             // 
             // listViewTopics
             // 
-            this._listViewTopics.HideSelection = false;
-            this._listViewTopics.Location = new System.Drawing.Point(12, 40);
-            this._listViewTopics.Name = "listViewTopics";
-            this._listViewTopics.Size = new System.Drawing.Size(306, 200);
-            this._listViewTopics.TabIndex = 2;
-            this._listViewTopics.UseCompatibleStateImageBehavior = false;
-            this._listViewTopics.View = System.Windows.Forms.View.List;
-            this._listViewTopics.Click += new System.EventHandler(this.listViewTopics_Click);
+            this.listViewTopics.HideSelection = false;
+            this.listViewTopics.Location = new System.Drawing.Point(12, 40);
+            this.listViewTopics.Name = "listViewTopics";
+            this.listViewTopics.Size = new System.Drawing.Size(306, 200);
+            this.listViewTopics.TabIndex = 2;
+            this.listViewTopics.UseCompatibleStateImageBehavior = false;
+            this.listViewTopics.View = System.Windows.Forms.View.List;
+            this.listViewTopics.Click += new System.EventHandler(this.listViewTopics_Click);
             // 
             // listViewMessages
             // 
-            this._listViewMessages.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.listViewMessages.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.timestampHeader,
             this.senderHeader,
             this.contentHeader});
-            this._listViewMessages.HideSelection = false;
-            this._listViewMessages.Location = new System.Drawing.Point(327, 40);
-            this._listViewMessages.Name = "listViewMessages";
-            this._listViewMessages.Size = new System.Drawing.Size(605, 200);
-            this._listViewMessages.TabIndex = 3;
-            this._listViewMessages.UseCompatibleStateImageBehavior = false;
-            this._listViewMessages.View = System.Windows.Forms.View.Details;
+            this.listViewMessages.HideSelection = false;
+            this.listViewMessages.Location = new System.Drawing.Point(327, 40);
+            this.listViewMessages.Name = "listViewMessages";
+            this.listViewMessages.Size = new System.Drawing.Size(605, 200);
+            this.listViewMessages.TabIndex = 3;
+            this.listViewMessages.UseCompatibleStateImageBehavior = false;
+            this.listViewMessages.View = System.Windows.Forms.View.Details;
             // 
             // timestampHeader
             // 
@@ -100,29 +102,50 @@ namespace MQTT_Intek
             // 
             // txtMessage
             // 
-            this._txtMessage.Location = new System.Drawing.Point(12, 250);
-            this._txtMessage.Name = "txtMessage";
-            this._txtMessage.Size = new System.Drawing.Size(811, 26);
-            this._txtMessage.TabIndex = 0;
+            this.txtMessage.Location = new System.Drawing.Point(12, 250);
+            this.txtMessage.Name = "txtMessage";
+            this.txtMessage.Size = new System.Drawing.Size(811, 26);
+            this.txtMessage.TabIndex = 0;
             // 
             // btnSend
             // 
-            this._btnSend.Location = new System.Drawing.Point(829, 250);
-            this._btnSend.Name = "btnSend";
-            this._btnSend.Size = new System.Drawing.Size(75, 26);
-            this._btnSend.TabIndex = 0;
-            this._btnSend.Text = "Send";
-            this._btnSend.Click += new System.EventHandler(this.btnSend_Click);
+            this.btnSend.Location = new System.Drawing.Point(829, 250);
+            this.btnSend.Name = "btnSend";
+            this.btnSend.Size = new System.Drawing.Size(75, 26);
+            this.btnSend.TabIndex = 0;
+            this.btnSend.Text = "Send";
+            this.btnSend.Click += new System.EventHandler(this.btnSend_Click);
+            // 
+            // changeBroker
+            // 
+            this.changeBroker.Location = new System.Drawing.Point(802, 7);
+            this.changeBroker.Name = "changeBroker";
+            this.changeBroker.Size = new System.Drawing.Size(85, 26);
+            this.changeBroker.TabIndex = 4;
+            this.changeBroker.Text = "Change";
+            this.changeBroker.UseVisualStyleBackColor = true;
+            this.changeBroker.Click += new System.EventHandler(this.btnChangeBroker_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(324, 10);
+            this.label1.Name = "ConnectionStatus";
+            this.label1.Size = new System.Drawing.Size(51, 20);
+            this.label1.TabIndex = 7;
+            this.label1.Text = "";
             // 
             // MainForm
             // 
             this.ClientSize = new System.Drawing.Size(1296, 479);
-            this.Controls.Add(this._txtNewTopic);
-            this.Controls.Add(this._btnSubscribe);
-            this.Controls.Add(this._listViewTopics);
-            this.Controls.Add(this._listViewMessages);
-            this.Controls.Add(this._txtMessage);
-            this.Controls.Add(this._btnSend);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.changeBroker);
+            this.Controls.Add(this.txtNewTopic);
+            this.Controls.Add(this.btnSubscribe);
+            this.Controls.Add(this.listViewTopics);
+            this.Controls.Add(this.listViewMessages);
+            this.Controls.Add(this.txtMessage);
+            this.Controls.Add(this.btnSend);
             this.Name = "MainForm";
             this.Text = "MQTT Client";
             this.ResumeLayout(false);
@@ -131,10 +154,17 @@ namespace MQTT_Intek
         }
 
         #endregion
-
+        private TextBox txtNewTopic;
+        private Button btnSubscribe;
+        private ListView listViewTopics;
+        private ListView listViewMessages;
+        private TextBox txtMessage;
+        private Button btnSend;
         private ColumnHeader timestampHeader;
         private ColumnHeader senderHeader;
         private ColumnHeader contentHeader;
+        private Button changeBroker;
+        private Label label1;
     }
 }
 

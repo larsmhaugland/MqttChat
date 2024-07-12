@@ -16,6 +16,8 @@ namespace MQTT_Intek
     {
         public string Username;
         public string Password;
+
+        public Credentials(string username, string password) => (Username, Password) = (username, password);
     }
 
 
