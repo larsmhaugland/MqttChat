@@ -1,8 +1,8 @@
 # MqttChat
-A simple chat application using MQTT protocol. Only works on public brokers.
+A simple .NET WinForms chat application using the MQTT protocol. Only works on public brokers.
 
 ## Usage
-When starting the program a GUID will be generated for you and by default the [HiveMQ public broker](broker.hivemq.com) will be connected to as indicated by the text in the top right. The topic ```MqttChat/#``` will be also automatically be subscribed to. 
+When starting the program a GUID will be generated for as client ID and by default the [HiveMQ public broker](broker.hivemq.com) will be connected to as indicated by the text in the top right. The topic ```MqttChat/#``` will be also automatically be subscribed to. 
 
 Other public brokers can be connected to by pressing the "Change" button in the top right. In the dialog box, write the hostname of the broker and the port number and press "OK".
 
